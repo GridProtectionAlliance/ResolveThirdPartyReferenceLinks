@@ -13,6 +13,7 @@ using Sandcastle.Core.BuildAssembler;
 using Sandcastle.Core.BuildAssembler.BuildComponent;
 
 using ResolveThirdPartyReferenceLinks.Providers;
+using Sandcastle.Core;
 
 [assembly: ComVisible(false)]
 [assembly: CLSCompliant(true)]
@@ -28,7 +29,7 @@ namespace ResolveThirdPartyReferenceLinks
         {
             public Factory()
             {
-                ReferenceBuildPlacement = new ComponentPlacement(PlacementAction.After, "XSL Transform Component");
+                ReferenceBuildPlacement = new ComponentPlacement(PlacementAction.After, "Transform Component");
             }
 
             public override BuildComponentCore Create()
@@ -39,7 +40,7 @@ namespace ResolveThirdPartyReferenceLinks
         #endregion
 
         #region Constructor
-        protected ResolveThirdPartyReferenceLinksComponent(BuildAssemblerCore buildAssembler) : base(buildAssembler)
+        protected ResolveThirdPartyReferenceLinksComponent(IBuildAssembler buildAssembler) : base(buildAssembler)
         {
         }
         #endregion
@@ -108,6 +109,7 @@ namespace ResolveThirdPartyReferenceLinks
 
                         // write hyperlink
                         WriteHrefFor(refLink, provider.CreateUrl(target), title);
+                        break;
                     }
             }
         }
