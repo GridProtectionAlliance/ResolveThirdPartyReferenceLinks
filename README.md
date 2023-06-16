@@ -61,11 +61,7 @@ The next example cross-links GitHub pages using Sandcastle generated conntent in
             <targetMatcher pattern=".:Gemstone\.Communication\..+" fullyQualifiedMemberName="false" />
             <targetFormatter>
               <steps>
-                <replace pattern="T:" with="T_" />
-                <replace pattern="E:" with="E_" />
-                <replace pattern="M:" with="M_" />
-                <replace pattern="P:" with="P_" />
-                <replace pattern="\." with="_" />
+                <replace pattern=":|\.|`" with="_" />
               </steps>
             </targetFormatter>
             <urlFormatter format="https://gemstone.github.io/communication/help/html/{target}.htm" target="_self" />
@@ -74,11 +70,7 @@ The next example cross-links GitHub pages using Sandcastle generated conntent in
             <targetMatcher pattern=".:Gemstone\.Threading\..+" fullyQualifiedMemberName="false" />
             <targetFormatter>
               <steps>
-                <replace pattern="T:" with="T_" />
-                <replace pattern="E:" with="E_" />
-                <replace pattern="M:" with="M_" />
-                <replace pattern="P:" with="P_" />
-                <replace pattern="\." with="_" />
+                <replace pattern=":|\.|`" with="_" />
               </steps>
             </targetFormatter>
             <urlFormatter format="https://gemstone.github.io/threading/help/html/{target}.htm" target="_self" />
@@ -87,11 +79,7 @@ The next example cross-links GitHub pages using Sandcastle generated conntent in
             <targetMatcher pattern=".:Gemstone\.Timeseries\..+" fullyQualifiedMemberName="false" />
             <targetFormatter>
               <steps>
-                <replace pattern="T:" with="T_" />
-                <replace pattern="E:" with="E_" />
-                <replace pattern="M:" with="M_" />
-                <replace pattern="P:" with="P_" />
-                <replace pattern="\." with="_" />
+                <replace pattern=":|\.|`" with="_" />
               </steps>
             </targetFormatter>
             <urlFormatter format="https://gemstone.github.io/timeseries/help/html/{target}.htm" target="_self" />
@@ -100,11 +88,7 @@ The next example cross-links GitHub pages using Sandcastle generated conntent in
             <targetMatcher pattern=".:Gemstone\.Diagnostics\..+" fullyQualifiedMemberName="false" />
             <targetFormatter>
               <steps>
-                <replace pattern="T:" with="T_" />
-                <replace pattern="E:" with="E_" />
-                <replace pattern="M:" with="M_" />
-                <replace pattern="P:" with="P_" />
-                <replace pattern="\." with="_" />
+                <replace pattern=":|\.|`" with="_" />
               </steps>
             </targetFormatter>
             <urlFormatter format="https://gemstone.github.io/diagnostics/help/html/{target}.htm" target="_self" />
@@ -113,11 +97,7 @@ The next example cross-links GitHub pages using Sandcastle generated conntent in
             <targetMatcher pattern=".:Gemstone\.IO\.(?!Parsing\.).+" fullyQualifiedMemberName="false" />
             <targetFormatter>
               <steps>
-                <replace pattern="T:" with="T_" />
-                <replace pattern="E:" with="E_" />
-                <replace pattern="M:" with="M_" />
-                <replace pattern="P:" with="P_" />
-                <replace pattern="\." with="_" />
+                <replace pattern=":|\.|`" with="_" />
               </steps>
             </targetFormatter>
             <urlFormatter format="https://gemstone.github.io/io/help/html/{target}.htm" target="_self" />
@@ -126,11 +106,7 @@ The next example cross-links GitHub pages using Sandcastle generated conntent in
             <targetMatcher pattern=".:Gemstone\.Numeric\..+" fullyQualifiedMemberName="false" />
             <targetFormatter>
               <steps>
-                <replace pattern="T:" with="T_" />
-                <replace pattern="E:" with="E_" />
-                <replace pattern="M:" with="M_" />
-                <replace pattern="P:" with="P_" />
-                <replace pattern="\." with="_" />
+                <replace pattern=":|\.|`" with="_" />
               </steps>
             </targetFormatter>
             <urlFormatter format="https://gemstone.github.io/numeric/help/html/{target}.htm" target="_self" />
@@ -141,11 +117,7 @@ The next example cross-links GitHub pages using Sandcastle generated conntent in
             <targetMatcher pattern=".:Gemstone\.(?!PhasorProtocols\.)..+" fullyQualifiedMemberName="false" />
             <targetFormatter>
               <steps>
-                <replace pattern="T:" with="T_" />
-                <replace pattern="E:" with="E_" />
-                <replace pattern="M:" with="M_" />
-                <replace pattern="P:" with="P_" />
-                <replace pattern="\." with="_" />
+                <replace pattern=":|\.|`" with="_" />
               </steps>
             </targetFormatter>
             <urlFormatter format="https://gemstone.github.io/common/help/html/{target}.htm" target="_self" />
