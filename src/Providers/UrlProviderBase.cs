@@ -8,70 +8,51 @@ namespace ResolveThirdPartyReferenceLinks.Providers
     public abstract class UrlProviderBase
     {
         [XmlAttribute("title")]
-        public string Title { get; set; }
+        public string? Title { get; set; }
 
         public class UrlProviderTargetMatcher
         {
             [XmlAttribute("pattern")]
-            public string Pattern { get; set; }
+            public string Pattern { get; set; } = default!;
+
+            [XmlAttribute("fullyQualifiedMemberName")]
+            public bool FullyQualifiedMemberName { get; set; } = true;
         }
 
         [XmlElement("targetMatcher")]
-        public UrlProviderTargetMatcher TargetMatcher { get; set; }
-
-        public class UrlProviderTargetFormatter
-        {
-            public abstract class TargetFormatterStep
-            {
-                public abstract string Apply(string target);
-            }
-
-            public class TargetFormatterReplaceStep : TargetFormatterStep
-            {
-                [XmlAttribute("pattern")]
-                public string Pattern { get; set; }
-
-                [XmlAttribute("with")]
-                public string Replacement { get; set; }
-
-                public override string Apply(string target)
-                {
-                    if (Pattern is string pattern)
-                        return new Regex(pattern).Replace(target, Replacement ?? string.Empty);
-                    return target;
-                }
-            }
-
-            [XmlArray("steps")]
-            [XmlArrayItem("replace", typeof(TargetFormatterReplaceStep))]
-            public Collection<TargetFormatterStep> Steps { get; set; }
-        }
-
-        [XmlElement("targetFormatter")]
-        public UrlProviderTargetFormatter TargetFormatter { get; set; }
+        public UrlProviderTargetMatcher TargetMatcher { get; set; } = default!;
 
         public class UrlProviderParameter
         {
             [XmlAttribute("name")]
-            public string Name { get; set; }
+            public string Name { get; set; } = default!;
 
             [XmlAttribute("default")]
-            public string DefaultValue { get; set; }
+            public string? DefaultValue { get; set; }
 
-            public string Value { get; set; }
+            public string? Value { get; set; }
         }
 
         [XmlArray("parameters")]
         [XmlArrayItem("parameter", typeof(UrlProviderParameter))]
-        public Collection<UrlProviderParameter> Parameters { get; set; }
+        public Collection<UrlProviderParameter>? Parameters { get; set; }
 
-        public virtual bool IsMatch(string target)
+        public virtual bool IsMatch(string target) => 
+            TargetMatcher.Pattern is { } pattern && new Regex(pattern).IsMatch(target);
+
+        public virtual string FormatTitle(string title)
         {
-            if (TargetMatcher?.Pattern is string pattern)
-                return new Regex(pattern).IsMatch(target);
-            return false;
+            if (TargetMatcher.FullyQualifiedMemberName)
+                return title;
+
+            int lastIndexOfDot = title.LastIndexOf(".", StringComparison.Ordinal);
+
+            if (lastIndexOfDot > -1 && lastIndexOfDot < title.Length - 1)
+                title = title.Substring(lastIndexOfDot + 1);
+
+            return title;
         }
 
-        public abstract Uri CreateUrl(string target);
+        public abstract (Uri, string target, string rel) CreateUrl(string target);
     }
 }

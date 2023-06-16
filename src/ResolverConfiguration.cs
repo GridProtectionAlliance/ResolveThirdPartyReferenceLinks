@@ -1,7 +1,5 @@
-using System;
 using System.Xml.Serialization;
 using System.Collections.ObjectModel;
-
 using ResolveThirdPartyReferenceLinks.Providers;
 
 namespace ResolveThirdPartyReferenceLinks
@@ -12,6 +10,6 @@ namespace ResolveThirdPartyReferenceLinks
         [XmlArray("urlProviders")]
         [XmlArrayItem("formattedProvider", typeof(FormattedUrlProvider))]
         [XmlArrayItem("dictProvider", typeof(DictionaryUrlProvider))]
-        public Collection<UrlProviderBase> UrlProviders { get; set; }
+        public Collection<UrlProviderBase>? UrlProviders { get; set; }
     }
 }

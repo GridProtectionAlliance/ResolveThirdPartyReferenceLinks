@@ -7,13 +7,13 @@
 		<AssemblyName>ResolveThirdPartyReferenceLinks</AssemblyName>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<Product>ResolveThirdPartyReferenceLinks</Product>
-		<Version>0.1.0</Version>
+		<Version>1.0.0</Version>
 		<PackageVersion>$(Version)-beta</PackageVersion>
 		<Title>ResolveThirdPartyReferenceLinks SandCastle BuildAssembly Component</Title>
-		<Description>SandCastle BuildAssembly component to resolve thirdparty reference links</Description>
-		<Authors>Robert McNeel and Associates</Authors>
+		<Description>SandCastle BuildAssembly component to resolve third-party reference links.</Description>
+		<Authors>Robert McNeel and Associates, Grid Protection Alliance, Inc.</Authors>
 		<Company>McNeel</Company>
-		<Copyright>Copyright (c) 1997-2021 Robert McNeel and Associates</Copyright>
+		<Copyright>Copyright (c) 1997-2021 Robert McNeel and Associates\r\nCopyright (c) 2023 Grid Protection Alliance, Inc.</Copyright>
 		<PackageIcon>icon.png</PackageIcon>
 		<RepositoryUrl>https://github.com/mcneel/ResolveThirdPartyReferenceLinks.git</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
@@ -24,7 +24,15 @@
 		<IsTool>true</IsTool>
 		<NoWarn>$(NoWarn);NU5128;CA1034;CA1303;CA1708;CA2227</NoWarn>
 		<ContentTargetFolders>tools\</ContentTargetFolders>
+		<LangVersion>latest</LangVersion>
+		<Nullable>enable</Nullable>
 	</PropertyGroup>
+
+	<ItemGroup>
+	  <Compile Remove="Tools\**" />
+	  <EmbeddedResource Remove="Tools\**" />
+	  <None Remove="Tools\**" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<None Include="$(SourceDir)..\art\icon.png" Pack="true" PackagePath="" />
@@ -33,4 +41,8 @@
 	<ItemGroup>
 		<PackageReference Include="EWSoftware.Sandcastle.Core" Version="2022.12.30" />
 	</ItemGroup>
+
+	<Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+	  <Exec Command="echo Updating AssemblyInfo.cs constants as read from project file...&#xD;&#xA;$(ProjectDir)Tools\ReadVersion\bin\$(Configuration)\net7.0\ReadVersion.exe $(MSBuildThisFileFullPath) " />
+	</Target>
 </Project>

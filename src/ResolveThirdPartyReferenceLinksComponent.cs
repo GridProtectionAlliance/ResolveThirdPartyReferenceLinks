@@ -1,30 +1,25 @@
 using System;
 using System.IO;
-using System.Linq;
 using System.Xml;
 using System.Xml.XPath;
 using System.Xml.Serialization;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using System.Collections.ObjectModel;
-using System.Resources;
-
+using System.Linq;
+using Sandcastle.Core;
 using Sandcastle.Core.BuildAssembler;
 using Sandcastle.Core.BuildAssembler.BuildComponent;
-
 using ResolveThirdPartyReferenceLinks.Providers;
-using Sandcastle.Core;
-
-[assembly: ComVisible(false)]
-[assembly: CLSCompliant(true)]
-[assembly: NeutralResourcesLanguage("en")]
 
 namespace ResolveThirdPartyReferenceLinks
 {
     public class ResolveThirdPartyReferenceLinksComponent : BuildComponentCore
     {
-        #region Build component factory for MEF
-        [BuildComponentExport("Resolve ThirdParty Reference Links", IsVisible = true)]
+        // Build component factory for MEF
+        [BuildComponentExport("Resolve ThirdParty Reference Links", IsVisible = true,
+            Version = AssemblyInfo.ProductVersion, Copyright = AssemblyInfo.Copyright,
+            Description = "This build component is used to resolve links to third-party documentation sources.\r\n" +
+                          "NOTE: Configuration is currently managed manually in the '.shfbproj' file, see documentation and examples.")]
         public sealed class Factory : BuildComponentFactory
         {
             public Factory()
@@ -32,106 +27,120 @@ namespace ResolveThirdPartyReferenceLinks
                 ReferenceBuildPlacement = new ComponentPlacement(PlacementAction.After, "Transform Component");
             }
 
-            public override BuildComponentCore Create()
-            {
-                return new ResolveThirdPartyReferenceLinksComponent(this.BuildAssembler);
-            }
+            public override BuildComponentCore Create() => 
+                new ResolveThirdPartyReferenceLinksComponent(BuildAssembler);
         }
-        #endregion
 
-        #region Constructor
         protected ResolveThirdPartyReferenceLinksComponent(IBuildAssembler buildAssembler) : base(buildAssembler)
         {
         }
-        #endregion
 
-        #region Abstract method implementations
-        List<UrlProviderBase> Providers { get; } = new List<UrlProviderBase>();
+        private List<UrlProviderBase> Providers { get; } = new();
 
+        // Abstract method implementations
         public override void Initialize(XPathNavigator configuration)
         {
-            if (configuration == null)
+            if (configuration is null)
                 throw new ArgumentNullException(nameof(configuration));
 
-            if (configuration.SelectSingleNode("configuration") is XPathNavigator xconfigs)
+            if (configuration.SelectSingleNode("configuration") is { } navigator)
             {
-                using (StringReader sread = new StringReader(xconfigs.OuterXml))
-                using (XmlReader reader = XmlReader.Create(sread, new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit }))
+                using StringReader stringReader = new(navigator.OuterXml);
+                using XmlReader xmlReader = XmlReader.Create(stringReader, new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit });
+
+                XmlSerializer serializer = new(typeof(ResolverConfiguration));
+                ResolverConfiguration configs = (ResolverConfiguration)serializer.Deserialize(xmlReader);
+
+                WriteMessage(MessageLevel.Info, $"Found {configs.UrlProviders?.Count ?? 0} providers...");
+
+                foreach (UrlProviderBase provider in configs.UrlProviders ?? new Collection<UrlProviderBase>())
                 {
-                    XmlSerializer serializer = new XmlSerializer(typeof(ResolverConfiguration));
-                    ResolverConfiguration configs = (ResolverConfiguration)serializer.Deserialize(reader);
-
-                    WriteMessage(MessageLevel.Info, $"Found {configs.UrlProviders?.Count ?? 0} providers...");
-                    foreach (var provider in configs.UrlProviders ?? new Collection<UrlProviderBase>())
+                    foreach (UrlProviderBase.UrlProviderParameter param in provider.Parameters ?? new Collection<UrlProviderBase.UrlProviderParameter>())
                     {
-                        foreach (var param in provider.Parameters ?? new Collection<UrlProviderBase.UrlProviderParameter>())
-                            if (configuration.SelectSingleNode(param.Name) is XPathNavigator xparam)
-                                param.Value = xparam.GetAttribute("value", string.Empty);
-
-                        WriteMessage(MessageLevel.Info, $"Adding URL provider: {provider.Title ?? provider.ToString()}");
-                        Providers.Add(provider);
+                        if (configuration.SelectSingleNode(param.Name) is { } pathParam)
+                            param.Value = pathParam.GetAttribute("value", string.Empty);
                     }
+
+                    WriteMessage(MessageLevel.Info, $"Adding URL provider: {provider.Title ?? provider.ToString()}");
+                    Providers.Add(provider);
                 }
             }
             else
-                Console.WriteLine("Config file is not provided.");
+            {
+                WriteMessage(MessageLevel.Error, "Config file is not provided.");
+            }
         }
 
         public override void Apply(XmlDocument document, string key)
         {
-            if (document == null)
+            if (document is null)
                 throw new ArgumentNullException(nameof(document));
 
-            if (key == null)
+            if (key is null)
                 throw new ArgumentNullException(nameof(key));
 
             // find all reference links in given document
             XPathNavigator[] referenceLinks =
-                document.CreateNavigator().Select(XPathExpression.Compile("//referenceLink")).ToArray();
+                document.CreateNavigator()?.Select(XPathExpression.Compile("//referenceLink")).ToArray() ??
+                Array.Empty<XPathNavigator>();
 
             WriteMessage(MessageLevel.Info, $"Resolving URL for {key}");
 
             foreach (XPathNavigator refLink in referenceLinks)
             {
-                string target = refLink.GetAttribute("target", string.Empty);
+                string? target = refLink.GetAttribute("target", string.Empty);
+
+                if (string.IsNullOrEmpty(target))
+                    continue;
+
                 WriteMessage(MessageLevel.Info, $"Found reference link to {target}");
 
                 // try to match target with a provider
-                foreach (UrlProviderBase provider in Providers)
-                    if (provider.IsMatch(target))
-                    {
-                        WriteMessage(MessageLevel.Info, $"Converting reference link for {target}");
+                foreach (UrlProviderBase provider in Providers.Where(provider => provider.IsMatch(target)))
+                {
+                    WriteMessage(MessageLevel.Info, $"Converting reference link for {target}");
 
-                        // create title for hyperlink
-                        string title = target;
-                        if (title.IndexOf(":", StringComparison.OrdinalIgnoreCase) is int index && index > -1)
-                            title = title.Substring(index + 1);
+                    // create title for hyper-link
+                    string title = target;
 
-                        // write hyperlink
-                        WriteHrefFor(refLink, provider.CreateUrl(target), title);
-                        break;
-                    }
+                    int index = title.IndexOf(":", StringComparison.Ordinal);
+
+                    if (index > -1)
+                        title = title.Substring(index + 1);
+
+                    // reduce title to member name only, if requested
+                    title = provider.FormatTitle(title);
+
+                    // write hyper-link
+                    WriteHrefFor(refLink, provider.CreateUrl(target), title);
+                    break;
+                }
             }
         }
 
-        static void WriteHrefFor(XPathNavigator linkNode, Uri uri, string contents)
+        private static void WriteHrefFor(XPathNavigator linkNode, (Uri, string, string) anchorParams, string contents)
         {
-            var writer = linkNode.InsertAfter();
+            XmlWriter writer = linkNode.InsertAfter();
+
+            (Uri uri, string target, string rel) = anchorParams;
+
             writer.WriteStartElement("a");
             writer.WriteAttributeString("href", uri.AbsoluteUri);
-            writer.WriteAttributeString("target", "_blank");
-            writer.WriteAttributeString("rel", "noopener noreferrer");
+            writer.WriteAttributeString("target", target);
+            writer.WriteAttributeString("rel", rel);
             writer.WriteString(contents);
             writer.WriteEndElement();
             writer.Close();
+
             linkNode.DeleteSelf();
         }
 
 #if DEBUG
-#pragma warning disable
-        public new void WriteMessage(MessageLevel level, string message, params object[] _) => Console.WriteLine($"[{level}] {message}");
-#pragma warning restore
+        public new void WriteMessage(MessageLevel level, string message, params object[] args)
+        {
+            base.WriteMessage(level, message, args);
+            Console.WriteLine($"[{level}] {message}");
+        }
 #endif
-        #endregion
     }
 }
