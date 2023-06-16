@@ -146,6 +146,9 @@ FormatterUrlProvider generates URLs based on a given format:
  - `urlFormatter.target`: is the target window for the URL e.g. `_self` in the example above -- _defaults to `_blank`_.
  - `urlFormatter.rel`: is the relative path to use for the anchor -- _defaults to `noreferrer`_.
 
+ #### Overloaded Method Resolution
+
+ Note that for links to Sandcastle docs generated for method overloads, each overload may be sequenced with an incrementing index in the order in which they appear in the assembly. To ensure that the correct overload is linked to, it may be necessary to create multiple explicit `targetFormatter` for each overload for proper rendering.
 
 ## Thanks
 
