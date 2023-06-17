@@ -61,7 +61,10 @@ The next example cross-links GitHub pages using Sandcastle generated conntent in
             <targetMatcher pattern=".:Gemstone\.Communication\..+" fullyQualifiedMemberName="false" />
             <targetFormatter>
               <steps>
+                <!-- Replace member separator tokens with underscores to match SHFB URL targets -->
                 <replace pattern=":|\.|`" with="_" />
+                <!-- Remove any method parameter definitions to match SHFB URL targets -->
+                <replace pattern="\(([^\)]*)\)" with="" />
               </steps>
             </targetFormatter>
             <urlFormatter format="https://gemstone.github.io/communication/help/html/{target}.htm" target="_self" />
@@ -71,6 +74,7 @@ The next example cross-links GitHub pages using Sandcastle generated conntent in
             <targetFormatter>
               <steps>
                 <replace pattern=":|\.|`" with="_" />
+                <replace pattern="\(([^\)]*)\)" with="" />
               </steps>
             </targetFormatter>
             <urlFormatter format="https://gemstone.github.io/threading/help/html/{target}.htm" target="_self" />
@@ -80,6 +84,7 @@ The next example cross-links GitHub pages using Sandcastle generated conntent in
             <targetFormatter>
               <steps>
                 <replace pattern=":|\.|`" with="_" />
+                <replace pattern="\(([^\)]*)\)" with="" />
               </steps>
             </targetFormatter>
             <urlFormatter format="https://gemstone.github.io/timeseries/help/html/{target}.htm" target="_self" />
@@ -89,6 +94,7 @@ The next example cross-links GitHub pages using Sandcastle generated conntent in
             <targetFormatter>
               <steps>
                 <replace pattern=":|\.|`" with="_" />
+                <replace pattern="\(([^\)]*)\)" with="" />
               </steps>
             </targetFormatter>
             <urlFormatter format="https://gemstone.github.io/diagnostics/help/html/{target}.htm" target="_self" />
@@ -98,6 +104,7 @@ The next example cross-links GitHub pages using Sandcastle generated conntent in
             <targetFormatter>
               <steps>
                 <replace pattern=":|\.|`" with="_" />
+                <replace pattern="\(([^\)]*)\)" with="" />
               </steps>
             </targetFormatter>
             <urlFormatter format="https://gemstone.github.io/io/help/html/{target}.htm" target="_self" />
@@ -107,6 +114,7 @@ The next example cross-links GitHub pages using Sandcastle generated conntent in
             <targetFormatter>
               <steps>
                 <replace pattern=":|\.|`" with="_" />
+                <replace pattern="\(([^\)]*)\)" with="" />
               </steps>
             </targetFormatter>
             <urlFormatter format="https://gemstone.github.io/numeric/help/html/{target}.htm" target="_self" />
@@ -118,6 +126,7 @@ The next example cross-links GitHub pages using Sandcastle generated conntent in
             <targetFormatter>
               <steps>
                 <replace pattern=":|\.|`" with="_" />
+                <replace pattern="\(([^\)]*)\)" with="" />
               </steps>
             </targetFormatter>
             <urlFormatter format="https://gemstone.github.io/common/help/html/{target}.htm" target="_self" />
@@ -148,7 +157,7 @@ FormatterUrlProvider generates URLs based on a given format:
 
  #### Overloaded Method Resolution
 
- Note that for links to Sandcastle docs generated for method overloads, each overload may be sequenced with an incrementing index in the order in which they appear in the assembly. To ensure that the correct overload is linked to, it may be necessary to create multiple explicit `targetFormatter` for each overload for proper rendering.
+ Note that for links to Sandcastle docs generated for method overloads, each overload may be sequenced with an incrementing index in the order in which they appear in the assembly. To ensure that the correct overload is linked to, it may be necessary to create multiple explicit `targetFormatter` configuration sections for each overload for proper URL target rendering. Otherwise the URL target will be the overload summary page which may be sufficient for many use cases.
 
 ## Thanks
 
