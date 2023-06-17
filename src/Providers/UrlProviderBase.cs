@@ -44,6 +44,22 @@ namespace ResolveThirdPartyReferenceLinks.Providers
         {
             try
             {
+                if (string.IsNullOrEmpty(title))
+                    return string.Empty;
+
+                // Remove type prefix
+                int indexOfColon = title.IndexOf(":", StringComparison.Ordinal);
+                string type = string.Empty;
+
+                if (indexOfColon > -1)
+                {
+                    title = title.Substring(indexOfColon + 1);
+                    type = title.Substring(0, indexOfColon);
+                }
+
+                // Namespace titles should always be fully qualified
+                bool useFullyQualifiedMemberName = type.Equals("N", StringComparison.OrdinalIgnoreCase) || TargetMatcher.FullyQualifiedMemberName;
+
                 // handle generic types
                 int indexOfParen = title.IndexOf("(", StringComparison.Ordinal);
                 string parameters = string.Empty;
@@ -57,7 +73,7 @@ namespace ResolveThirdPartyReferenceLinks.Providers
 
                 title = $"{RemoveGenericTypeSuffixes(title)}{parameters}";
 
-                if (TargetMatcher.FullyQualifiedMemberName)
+                if (useFullyQualifiedMemberName)
                     return title;
 
                 indexOfParen = title.IndexOf("(", StringComparison.Ordinal);

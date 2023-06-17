@@ -122,15 +122,10 @@ namespace ResolveThirdPartyReferenceLinks
                 {
                     WriteMessage(MessageLevel.Info, $"Converting reference link for {target}");
 
-                    // create title for hyper-link
+                    // create title 
                     string title = target;
 
-                    int indexOfColon = title.IndexOf(":", StringComparison.Ordinal);
-
-                    if (indexOfColon > -1)
-                        title = title.Substring(indexOfColon + 1);
-
-                    // format title and reduce to member name only, if requested
+                    // format title for hyper-link and reduce to member name only, if requested
                     title = provider.FormatTitle(title, ex => WriteMessage(MessageLevel.Warn, $"Failed to format title: {ex.Message}"));
 
                     // write hyper-link
