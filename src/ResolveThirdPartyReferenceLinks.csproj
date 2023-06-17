@@ -7,8 +7,9 @@
 		<AssemblyName>ResolveThirdPartyReferenceLinks</AssemblyName>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<Product>ResolveThirdPartyReferenceLinks</Product>
-		<Version>1.0.0</Version>
-		<PackageVersion>$(Version)-beta</PackageVersion>
+		<Version>1.0.1</Version>
+		<PackageVersion>$(Version)</PackageVersion>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<Title>ResolveThirdPartyReferenceLinks SandCastle BuildAssembly Component</Title>
 		<Description>SandCastle BuildAssembly component to resolve third-party reference links.</Description>
 		<Authors>Robert McNeel and Associates, Grid Protection Alliance, Inc.</Authors>
@@ -26,6 +27,8 @@
 		<ContentTargetFolders>tools\</ContentTargetFolders>
 		<LangVersion>latest</LangVersion>
 		<Nullable>enable</Nullable>
+		<OutputPath Condition="'$(Configuration)'=='Debug'">$(SHFBROOT)Components</OutputPath>
+		<AppendTargetFrameworkToOutputPath Condition="'$(Configuration)'=='Debug'">false</AppendTargetFrameworkToOutputPath>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -36,6 +39,7 @@
 
 	<ItemGroup>
 		<None Include="$(SourceDir)..\art\icon.png" Pack="true" PackagePath="" />
+		<None Include="$(SourceDir)..\README.md" Pack="true" PackagePath="\" />
 	</ItemGroup>
 
 	<ItemGroup>

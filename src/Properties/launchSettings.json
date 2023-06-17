@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "ResolveThirdPartyReferenceLinks": {
+      "commandName": "Executable",
+      "executablePath": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Msbuild\\Current\\Bin\\amd64\\MSBuild.exe",
+      "commandLineArgs": "D:\\Projects\\gemstone\\phasor-protocols\\src\\DocGen\\docgen.shfbproj",
+      "nativeDebugging": true
+    }
+  }
+}
