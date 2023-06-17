@@ -40,17 +40,97 @@ namespace ResolveThirdPartyReferenceLinks.Providers
         public virtual bool IsMatch(string target) => 
             TargetMatcher.Pattern is { } pattern && new Regex(pattern).IsMatch(target);
 
-        public virtual string FormatTitle(string title)
+        public virtual string FormatTitle(string title, Action<Exception> handleException)
         {
-            if (TargetMatcher.FullyQualifiedMemberName)
-                return title;
+            try
+            {
+                // handle generic types
+                int indexOfParen = title.IndexOf("(", StringComparison.Ordinal);
+                string parameters = string.Empty;
 
-            int lastIndexOfDot = title.LastIndexOf(".", StringComparison.Ordinal);
+                if (indexOfParen > -1)
+                {
+                    // Fix up generic type parameters
+                    parameters = UpdateGenericType(title.Substring(indexOfParen).Replace('{', '<').Replace('}', '>'));
+                    title = title.Substring(0, indexOfParen);
+                }
 
-            if (lastIndexOfDot > -1 && lastIndexOfDot < title.Length - 1)
-                title = title.Substring(lastIndexOfDot + 1);
+                title = $"{RemoveGenericTypeSuffixes(title)}{parameters}";
+
+                if (TargetMatcher.FullyQualifiedMemberName)
+                    return title;
+
+                indexOfParen = title.IndexOf("(", StringComparison.Ordinal);
+                parameters = string.Empty;
+
+                if (indexOfParen > -1)
+                {
+                    parameters = title.Substring(indexOfParen + 1, title.Length - indexOfParen - 2);
+                    title = title.Substring(0, indexOfParen);
+
+                    string[] parameterList = parameters.Split(',');
+
+                    for (int i = 0; i < parameterList.Length; i++)
+                    {
+                        string parameter = parameterList[i].Trim();
+                        
+                        int indexOfLessThan = parameter.IndexOf("<", StringComparison.Ordinal);
+                        string generics = string.Empty;
+                        
+                        if (indexOfLessThan > -1)
+                        {
+                            generics = parameter.Substring(indexOfLessThan + 1, parameter.Length - indexOfLessThan - 2);
+                            parameter = parameter.Substring(0, indexOfLessThan);
+
+                            string[] genericList = generics.Split(',');
+
+                            for (int j = 0; j < genericList.Length; j++)
+                                genericList[j] = RemoveNamespace(genericList[j].Trim());
+
+                            generics = string.Join(", ", genericList);
+                        }
+
+                        parameter = RemoveNamespace(parameter.Trim());
+
+                        if (!string.IsNullOrEmpty(generics))
+                            parameter += $"<{generics}>";
+
+                        parameterList[i] = parameter;
+                    }
+
+                    parameters = string.Join(", ", parameterList);
+                }
+
+                title = RemoveNamespace(title);
+
+                if (!string.IsNullOrEmpty(parameters))
+                    title += $"({parameters})";
+            }
+            catch (Exception ex)
+            {
+                handleException(ex);
+            }
 
             return title;
+        }
+
+        private static readonly Regex s_updateGenericType = new(@"`(\d+)", RegexOptions.Compiled);
+        private static readonly Regex s_findGenericType = new(@"`\d+", RegexOptions.Compiled);
+
+        private static string UpdateGenericType(string input) =>
+            s_updateGenericType.Replace(input, match => $"T{(int.Parse(match.Groups[1].Value) + 1)}");
+
+        private static string RemoveGenericTypeSuffixes(string input) =>
+            s_findGenericType.Replace(input, string.Empty);
+        
+        private static string RemoveNamespace(string memberName)
+        {
+            int lastIndexOfDot = memberName.LastIndexOf(".", StringComparison.Ordinal);
+
+            if (lastIndexOfDot > -1 && lastIndexOfDot < memberName.Length - 1)
+                memberName = memberName.Substring(lastIndexOfDot + 1);
+
+            return memberName;
         }
 
         public abstract (Uri, string target, string rel) CreateUrl(string target);

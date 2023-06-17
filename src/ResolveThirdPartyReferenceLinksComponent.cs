@@ -1,3 +1,5 @@
+//#define INSPECT
+
 using System;
 using System.IO;
 using System.Xml;
@@ -19,7 +21,8 @@ namespace ResolveThirdPartyReferenceLinks
         [BuildComponentExport("Resolve ThirdParty Reference Links", IsVisible = true,
             Version = AssemblyInfo.ProductVersion, Copyright = AssemblyInfo.Copyright,
             Description = "This build component is used to resolve links to third-party documentation sources.\r\n" +
-                          "NOTE: Configuration is currently managed manually in the '.shfbproj' file, see documentation and examples.")]
+                          "NOTE: Configuration is currently managed manually in the '.shfbproj' file, see documentation and examples at:\r\n"+
+                          "https://github.com/GridProtectionAlliance/ResolveThirdPartyReferenceLinks")]
         public sealed class Factory : BuildComponentFactory
         {
             public Factory()
@@ -84,6 +87,25 @@ namespace ResolveThirdPartyReferenceLinks
                 document.CreateNavigator()?.Select(XPathExpression.Compile("//referenceLink")).ToArray() ??
                 Array.Empty<XPathNavigator>();
 
+        #if INSPECT
+            try
+            {
+                static string removeInvalidChars(string source) => 
+                    Path.GetInvalidFileNameChars().Aggregate(source, (current, invalidChar) => 
+                        current.Replace(invalidChar.ToString(), "_"));
+
+                File.WriteAllText($"D:\\Projects\\ResolveThirdPartyReferenceLinks\\src\\bin\\Debug\\{removeInvalidChars(key)}.txt", 
+                        string.Join(Environment.NewLine, referenceLinks.Select(link => link.GetAttribute("target", string.Empty))));
+
+                File.WriteAllText($"D:\\Projects\\ResolveThirdPartyReferenceLinks\\src\\bin\\Debug\\{removeInvalidChars(key)}.html",
+                    document.InnerXml);
+            }
+            catch (Exception ex)
+            {
+                WriteMessage(MessageLevel.Warn, $"Failed to export reference links for \"{key}\": {ex.Message}");
+            }
+        #endif
+
             WriteMessage(MessageLevel.Info, $"Resolving URL for {key}");
 
             foreach (XPathNavigator refLink in referenceLinks)
@@ -103,13 +125,13 @@ namespace ResolveThirdPartyReferenceLinks
                     // create title for hyper-link
                     string title = target;
 
-                    int index = title.IndexOf(":", StringComparison.Ordinal);
+                    int indexOfColon = title.IndexOf(":", StringComparison.Ordinal);
 
-                    if (index > -1)
-                        title = title.Substring(index + 1);
+                    if (indexOfColon > -1)
+                        title = title.Substring(indexOfColon + 1);
 
-                    // reduce title to member name only, if requested
-                    title = provider.FormatTitle(title);
+                    // format title and reduce to member name only, if requested
+                    title = provider.FormatTitle(title, ex => WriteMessage(MessageLevel.Warn, $"Failed to format title: {ex.Message}"));
 
                     // write hyper-link
                     WriteHrefFor(refLink, provider.CreateUrl(target), title);
@@ -135,12 +157,12 @@ namespace ResolveThirdPartyReferenceLinks
             linkNode.DeleteSelf();
         }
 
-#if DEBUG
+    #if DEBUG
         public new void WriteMessage(MessageLevel level, string message, params object[] args)
         {
             base.WriteMessage(level, message, args);
             Console.WriteLine($"[{level}] {message}");
         }
-#endif
+    #endif
     }
 }
