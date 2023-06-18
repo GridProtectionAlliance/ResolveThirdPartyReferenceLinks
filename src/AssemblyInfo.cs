@@ -4,12 +4,12 @@
 //     file may cause incorrect behavior and will be lost
 //     if the code is regenerated.
 //
-//     Generated on 2023 June 18 01:55:34 UTC
+//     Generated on 2023 June 18 04:27:06 UTC
 // </auto-generated>
 //---------------------------------------------------------
 
 internal static class AssemblyInfo
 {
-  public const string ProductVersion = "1.0.1";
+  public const string ProductVersion = "1.0.2";
   public const string Copyright = "Copyright (c) 1997-2021 Robert McNeel and Associates\r\nCopyright (c) 2023 Grid Protection Alliance, Inc.";
 }
