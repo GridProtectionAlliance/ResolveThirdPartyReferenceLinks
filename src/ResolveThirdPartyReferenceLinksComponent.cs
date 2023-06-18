@@ -12,6 +12,7 @@ using Sandcastle.Core;
 using Sandcastle.Core.BuildAssembler;
 using Sandcastle.Core.BuildAssembler.BuildComponent;
 using ResolveThirdPartyReferenceLinks.Providers;
+using System.Text.RegularExpressions;
 
 namespace ResolveThirdPartyReferenceLinks
 {
@@ -87,7 +88,7 @@ namespace ResolveThirdPartyReferenceLinks
                 document.CreateNavigator()?.Select(XPathExpression.Compile("//referenceLink")).ToArray() ??
                 Array.Empty<XPathNavigator>();
 
-        #if INSPECT
+        #if DEBUG && INSPECT
             try
             {
                 static string removeInvalidChars(string source) => 
@@ -106,6 +107,46 @@ namespace ResolveThirdPartyReferenceLinks
             }
         #endif
 
+            // all reference links that are a direct descendant of a <td> element are member definitions
+            // in the VS2013 and Default2022 Sandcastle presentation styles. Knowing this allows us to
+            // determine which methods are overloads and specifically target the proper SHFB URL:
+            Dictionary<string, int> overloadMethodCount = new();
+            Dictionary<string, string> overloadMethodNames = new();
+
+            foreach (XPathNavigator refLink in referenceLinks)
+            {
+                XPathNavigator parent = refLink.Clone();
+
+                if (!parent.MoveToParent())
+                    continue;
+
+                // make sure parent node is a <td> element
+                if (!string.Equals(parent.Name, "td", StringComparison.Ordinal))
+                    continue;
+
+                // make sure reference link is the first direct descendant of the <td> element
+                parent.MoveToFirstChild();
+
+                if (!parent.IsSamePosition(refLink))
+                    continue;
+
+                string? target = refLink.GetAttribute("target", string.Empty);
+
+                if (string.IsNullOrEmpty(target))
+                    continue;
+
+                // remove any parameters from the target to get the base method name
+                string baseMethodName = GetBaseMethodName(target);
+
+                if (overloadMethodCount.TryGetValue(baseMethodName, out int count))
+                    count++;
+
+                overloadMethodCount[baseMethodName] = count;
+
+                if (count > 0)
+                    overloadMethodNames[target] = $"{target}_{count}";
+            }
+
             WriteMessage(MessageLevel.Info, $"Resolving URL for {key}");
 
             foreach (XPathNavigator refLink in referenceLinks)
@@ -120,13 +161,19 @@ namespace ResolveThirdPartyReferenceLinks
                 // try to match target with a provider
                 foreach (UrlProviderBase provider in Providers.Where(provider => provider.IsMatch(target)))
                 {
-                    WriteMessage(MessageLevel.Info, $"Converting reference link for {target}");
+                    bool sandcastleTarget = provider.TargetMatcher.SandcastleTarget;
+
+                    WriteMessage(MessageLevel.Info, $"Converting reference link for {(sandcastleTarget ? "SHFB" : "external")} target: {target}");
 
                     // create title 
                     string title = target;
 
                     // format title for hyper-link and reduce to member name only, if requested
                     title = provider.FormatTitle(title, ex => WriteMessage(MessageLevel.Warn, $"Failed to format title: {ex.Message}"));
+
+                    // check for SHFB method overloads
+                    if (sandcastleTarget && overloadMethodNames.TryGetValue(target, out string overloadTarget))
+                        target = overloadTarget;
 
                     // write hyper-link
                     WriteHrefFor(refLink, provider.CreateUrl(target), title);
@@ -159,5 +206,10 @@ namespace ResolveThirdPartyReferenceLinks
             Console.WriteLine($"[{level}] {message}");
         }
     #endif
+
+        private static readonly Regex s_baseMethodName = new(@"\(([^\)]*)\)", RegexOptions.Compiled);
+
+        private static string GetBaseMethodName(string methodName) => 
+            s_baseMethodName.Replace(methodName, string.Empty);
     }
 }

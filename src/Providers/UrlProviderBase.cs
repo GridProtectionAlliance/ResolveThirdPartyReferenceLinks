@@ -17,6 +17,9 @@ namespace ResolveThirdPartyReferenceLinks.Providers
 
             [XmlAttribute("fullyQualifiedMemberName")]
             public bool FullyQualifiedMemberName { get; set; } = true;
+
+            [XmlAttribute("sandcastleTarget")]
+            public bool SandcastleTarget { get; set; }
         }
 
         [XmlElement("targetMatcher")]
@@ -57,9 +60,6 @@ namespace ResolveThirdPartyReferenceLinks.Providers
                     type = title.Substring(0, indexOfColon);
                 }
 
-                // Namespace titles should always be fully qualified
-                bool useFullyQualifiedMemberName = type.Equals("N", StringComparison.OrdinalIgnoreCase) || TargetMatcher.FullyQualifiedMemberName;
-
                 // handle generic types
                 int indexOfParen = title.IndexOf("(", StringComparison.Ordinal);
                 string parameters = string.Empty;
@@ -73,7 +73,8 @@ namespace ResolveThirdPartyReferenceLinks.Providers
 
                 title = $"{RemoveGenericTypeSuffixes(title)}{parameters}";
 
-                if (useFullyQualifiedMemberName)
+                // Namespace titles should always be fully qualified
+                if (type.Equals("N", StringComparison.OrdinalIgnoreCase) || TargetMatcher.FullyQualifiedMemberName)
                     return title;
 
                 indexOfParen = title.IndexOf("(", StringComparison.Ordinal);

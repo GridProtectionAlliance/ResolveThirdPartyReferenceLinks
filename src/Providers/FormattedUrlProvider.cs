@@ -1,6 +1,7 @@
 using System;
 using System.Xml.Serialization;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace ResolveThirdPartyReferenceLinks.Providers
@@ -58,15 +59,37 @@ namespace ResolveThirdPartyReferenceLinks.Providers
 
             // generate title
             string formattedTarget = target;
-                
-            foreach (UrlProviderTargetFormatter.TargetFormatterStep step in TargetFormatter?.Steps ?? new Collection<UrlProviderTargetFormatter.TargetFormatterStep>())
-                formattedTarget = step.Apply(formattedTarget);
+
+            Collection<UrlProviderTargetFormatter.TargetFormatterStep> steps = TargetFormatter?.Steps ?? 
+                new Collection<UrlProviderTargetFormatter.TargetFormatterStep>();
+
+            // if target is for SHFB and no steps are defined, apply default steps
+            if (TargetMatcher.SandcastleTarget && steps.Count == 0)
+            {
+                // Add default <replace pattern=":|\.|`" with="_" />
+                steps.Add(new UrlProviderTargetFormatter.TargetFormatterReplaceStep
+                {
+                    Pattern = @":|\.|`",
+                    Replacement = "_"
+                });
+
+                // Add default <replace pattern="\(([^\)]*)\)" with="" />
+                steps.Add(new UrlProviderTargetFormatter.TargetFormatterReplaceStep
+                {
+                    Pattern = @"\(([^\)]*)\)",
+                    Replacement = ""
+                });
+            }
+
+            // apply formatting steps
+            formattedTarget = steps.Aggregate(formattedTarget, 
+                (current, step) => step.Apply(current));
 
             // generate url
             string url = urlFormat.Replace("{target}", formattedTarget);
-                
-            foreach (UrlProviderParameter param in Parameters ?? new Collection<UrlProviderParameter>())
-                url = url.Replace($"{{{param.Name}}}", param.Value);
+
+            url = (Parameters ?? new Collection<UrlProviderParameter>()).Aggregate(url, 
+                (current, param) => current.Replace($"{{{param.Name}}}", param.Value));
 
             return (new Uri(url), UrlFormatter.Target, UrlFormatter.Rel);
         }
